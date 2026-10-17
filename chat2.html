@@ -2,442 +2,166 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>モダンチャットアプリ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ModanChat - Realtime DB & Gemini AI</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; }
-    body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    
-    /* 認証画面 */
-    .auth-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 360px; }
-    .auth-container h2 { text-align: center; margin-bottom: 20px; color: #333; }
-    .input-group { margin-bottom: 15px; }
-    .input-group label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; }
-    .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-    .btn { width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-    .btn:hover { background: #0056b3; }
-    .btn-secondary { background: #6c757d; }
-    .btn-secondary:hover { background: #5a6268; }
-
-    /* メインチャット画面 */
-    .app-container { display: none; width: 95vw; max-width: 1100px; height: 90vh; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; flex-direction: row; }
-    
-    /* サイドバー */
-    .sidebar { width: 300px; background: #f8f9fa; border-right: 1px solid #e9ecef; display: flex; flex-direction: column; }
-    .user-profile { padding: 15px; background: #e9ecef; display: flex; justify-content: space-between; align-items: center; }
-    .user-profile .name { font-weight: bold; font-size: 14px; }
-    .logout-btn { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 12px; }
-
-    .nav-tabs { display: flex; background: #dee2e6; }
-    .tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 13px; color: #495057; }
-    .tab-btn.active { background: white; color: #007bff; border-bottom: 2px solid #007bff; }
-
-    .tab-content { flex: 1; overflow-y: auto; padding: 10px; }
-    .chat-item { padding: 10px; border-radius: 8px; cursor: pointer; margin-bottom: 5px; background: white; border: 1px solid #e9ecef; }
-    .chat-item:hover, .chat-item.active { background: #e7f1ff; border-color: #b6d4fe; }
-
-    /* チャットメインエリア */
-    .main-chat { flex: 1; display: flex; flex-direction: column; background: #fff; }
-    .chat-header { padding: 15px; border-bottom: 1px solid #e9ecef; font-weight: bold; font-size: 16px; background: #fafafa; }
-    .messages-area { flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa; display: flex; flex-direction: column; gap: 10px; }
-    
-    .msg { max-width: 70%; padding: 10px 14px; border-radius: 15px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; }
-    .msg.me { align-self: flex-end; background: #007bff; color: white; border-bottom-right-radius: 2px; }
-    .msg.other { align-self: flex-start; background: #e9ecef; color: #333; border-bottom-left-radius: 2px; }
-    .msg.gemini { align-self: flex-start; background: #e3f2fd; color: #0c5460; border: 1px solid #b8daff; }
-
-    .chat-input-area { padding: 12px; border-top: 1px solid #e9ecef; display: flex; gap: 8px; background: white; }
-    .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
-    .chat-input-area button { padding: 8px 18px; background: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
-
-    /* ボタン各種 */
-    .btn-sm { padding: 4px 8px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer; }
-    .btn-success { background: #28a745; color: white; }
-    .btn-danger { background: #dc3545; color: white; }
-    .btn-warning { background: #ffc107; color: black; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background: #121212; color: #fff; display: flex; height: 100vh; justify-content: center; align-items: center; }
+    .container { width: 100%; max-width: 500px; height: 100vh; display: flex; flex-direction: column; background: #1e1e1e; }
+    header { padding: 15px; background: #2d2d2d; display: flex; justify-content: space-between; align-items: center; }
+    .status { font-size: 0.8rem; color: #4caf50; }
+    .auth-box { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    input, button { padding: 12px; border-radius: 8px; border: none; font-size: 1rem; }
+    input { background: #333; color: #fff; }
+    button { background: #007bff; color: #fff; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; word-break: break-word; }
+    .msg.me { background: #007bff; align-self: flex-end; }
+    .msg.other { background: #333; align-self: flex-start; }
+    .msg.ai { background: #6c5ce7; align-self: flex-start; }
+    .sender-name { font-size: 0.75rem; color: #aaa; margin-bottom: 3px; }
+    .input-area { padding: 15px; background: #2d2d2d; display: flex; gap: 10px; }
+    .input-area input { flex: 1; }
+    .hidden { display: none !important; }
   </style>
+
+  <!-- Firebase SDK (v9/v10 Compat Mode) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
-  <!-- 1. 認証画面（ログイン / 新規登録） -->
-  <div id="authBox" class="auth-container">
-    <h2 id="authTitle">ログイン</h2>
-    <div class="input-group">
-      <label>ユーザーID</label>
-      <input type="text" id="authUserId" placeholder="ユーザーID">
-    </div>
-    <div class="input-group">
-      <label>パスワード</label>
-      <input type="password" id="authPassword" placeholder="••••••••">
-    </div>
-    
-    <button type="button" class="btn" id="submitAuthBtn" onclick="submitAuth()">ログイン</button>
-    <button type="button" class="btn btn-secondary" id="toggleAuthBtn" onclick="toggleAuthMode()">新規登録モードに切替</button>
-  </div>
+  <div class="container">
+    <header>
+      <h2>ModanChat</h2>
+      <div id="userInfo" class="status">未ログイン</div>
+    </header>
 
-  <!-- 2. メインアプリ画面 -->
-  <div id="appBox" class="app-container">
-    <!-- サイドバー -->
-    <div class="sidebar">
-      <div class="user-profile">
-        <div>
-          <span class="name" id="myUserName">ユーザー</span>
-          <span id="myRoleBadge" style="font-size:10px; background:#6c757d; color:white; padding:2px 4px; border-radius:3px;">USER</span>
-        </div>
-        <button class="logout-btn" onclick="logout()">ログアウト</button>
-      </div>
-
-      <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('chats')">トーク</button>
-        <button class="tab-btn" onclick="switchTab('friends')">フレンド</button>
-        <button class="tab-btn" id="adminTabBtn" style="display:none;" onclick="switchTab('admin')">管理者</button>
-      </div>
-
-      <!-- タブ1: トーク一覧 -->
-      <div id="tabChats" class="tab-content">
-        <div class="chat-item" onclick="selectGeminiChat()">
-          <strong>🤖 Gemini AI</strong>
-          <div style="font-size:12px; color:#666;">あなた専用AIアシスタント</div>
-        </div>
-        <div id="chatList"></div>
-      </div>
-
-      <!-- タブ2: フレンド申請・一覧 -->
-      <div id="tabFriends" class="tab-content" style="display:none;">
-        <div style="margin-bottom: 15px;">
-          <input type="text" id="targetFriendId" placeholder="相手のユーザーID" style="width:70%; padding:6px; font-size:12px;">
-          <button class="btn-sm btn-success" onclick="sendFriendRequest()">申請</button>
-        </div>
-        <div id="friendRequestsList"></div>
-        <hr style="margin: 10px 0;">
-        <div id="friendsList"></div>
-      </div>
-
-      <!-- タブ3: 管理者機能 -->
-      <div id="tabAdmin" class="tab-content" style="display:none;">
-        <input type="text" id="adminSearchInput" placeholder="IDで検索..." onkeyup="renderAdminUserList()" style="width:100%; padding:6px; font-size:12px; margin-bottom:10px;">
-        <div id="adminUserList"></div>
-      </div>
+    <!-- ログイン・新規登録画面 -->
+    <div id="authScreen" class="auth-box">
+      <h3>ログイン / 新規登録</h3>
+      <input type="text" id="usernameInput" placeholder="ユーザー名を入力 (例: admin, taro)">
+      <button onclick="login()">チャットを始める</button>
     </div>
 
-    <!-- メインチャットエリア -->
-    <div class="main-chat">
-      <div class="chat-header" id="activeChatHeader">🤖 Gemini AI</div>
-      <div class="messages-area" id="messagesArea"></div>
-      <div class="chat-input-area">
-        <input type="text" id="msgInput" placeholder="メッセージを入力..." onkeypress="if(event.key==='Enter') sendMsg()">
-        <button onclick="sendMsg()">送信</button>
+    <!-- チャット画面 -->
+    <div id="chatScreen" class="hidden" style="display: flex; flex-direction: column; flex: 1;">
+      <div class="chat-box" id="chatBox"></div>
+      <div class="input-area">
+        <input type="text" id="messageInput" placeholder="メッセージを入力... (@ai でGeminiに質問)">
+        <button onclick="sendMessage()">送信</button>
       </div>
     </div>
   </div>
 
   <script>
-    // --- 🔑 Gemini APIキーをここに貼り付けます ---
-    const GEMINI_API_KEY = 'AQ.Ab8RN6KnmBPFQ4MyLHHoaWzKnBjGnUvCg9uUlxvLg5ulA1t2Dg';
-
-    // --- データベース（メモリ内保存） ---
-    const users = {
-      admin: { pass: 'ayane1211', name: '管理者', role: 'admin', isBanned: false, friends: [], requests: [], warning: '' },
-      taro: { pass: '1234', name: 'タロー', role: 'user', isBanned: false, friends: [], requests: [], warning: '' }
+    // --- Firebase 設定 ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyBS-SR6GzSSavdj1BXaJix5nnaEG2H0JQ4",
+      authDomain: "modanchat-db.firebaseapp.com",
+      databaseURL: "https://modanchat-db-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "modanchat-db",
+      storageBucket: "modanchat-db.firebasestorage.app",
+      messagingSenderId: "705841890409",
+      appId: "1:705841890409:web:9a12bc09110c753809cef8",
+      measurementId: "G-B5RH1888K9"
     };
 
-    const messages = {}; // 各対話のメッセージ履歴を保存するオブジェクト
+    // Gemini API Key (GitHubコードに記載済みのキー)
+    const GEMINI_API_KEY = "AIzaSyBS-SR6GzSSavdj1BXaJix5nnaEG2H0JQ4";
 
-    let currentUser = null;
-    let activeChatTarget = null;
-    let isRegisterMode = false;
+    // Firebase 初期化
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    // --- 認証モード切り替え ---
-    function toggleAuthMode() {
-      isRegisterMode = !isRegisterMode;
-      const title = document.getElementById('authTitle');
-      const submitBtn = document.getElementById('submitAuthBtn');
-      const toggleBtn = document.getElementById('toggleAuthBtn');
+    let currentUser = "";
 
-      if (isRegisterMode) {
-        title.innerText = '新規登録';
-        submitBtn.innerText = 'アカウント作成';
-        toggleBtn.innerText = 'ログイン画面へ戻る';
-      } else {
-        title.innerText = 'ログイン';
-        submitBtn.innerText = 'ログイン';
-        toggleBtn.innerText = '新規登録モードに切替';
-      }
-    }
-
-    // --- ログイン / 新規登録処理 ---
-    function submitAuth() {
-      const idInput = document.getElementById('authUserId');
-      const passInput = document.getElementById('authPassword');
-      const id = idInput.value.trim();
-      const pass = passInput.value.trim();
-
-      if (!id || !pass) {
-        alert('ユーザーIDとパスワードの両方を入力してください。');
-        return;
-      }
-
-      if (isRegisterMode) {
-        if (users[id]) {
-          alert('そのユーザーIDは既に使用されています。');
-          return;
-        }
-        users[id] = { pass: pass, name: id, role: 'user', isBanned: false, friends: [], requests: [], warning: '' };
-        alert(`アカウント「${id}」を作成しました！ログインしてください。`);
-        toggleAuthMode();
-      } else {
-        if (!users[id] || users[id].pass !== pass) {
-          alert('ユーザーIDまたはパスワードが正しくありません。');
-          return;
-        }
-        if (users[id].isBanned) {
-          alert('このアカウントはBANされているためログインできません。');
-          return;
-        }
-        currentUser = id;
-        document.getElementById('authBox').style.display = 'none';
-        document.getElementById('appBox').style.display = 'flex';
-        initApp();
-      }
-    }
-
-    function logout() {
-      currentUser = null;
-      activeChatTarget = null;
-      document.getElementById('authBox').style.display = 'block';
-      document.getElementById('appBox').style.display = 'none';
-      document.getElementById('authUserId').value = '';
-      document.getElementById('authPassword').value = '';
-    }
-
-    // --- アプリ初期化 ---
-    function initApp() {
-      const user = users[currentUser];
-      document.getElementById('myUserName').innerText = user.name;
-      document.getElementById('myRoleBadge').innerText = user.role.toUpperCase();
-      document.getElementById('adminTabBtn').style.display = user.role === 'admin' ? 'block' : 'none';
-
-      if (user.warning) {
-        alert(`【管理者からの警告】\n${user.warning}`);
-        user.warning = '';
-      }
-
-      renderFriendsTab();
-      renderChatsTab();
-      selectGeminiChat(); // ユーザーごとのGeminiチャットを開く
-    }
-
-    // --- ユーザー個別のGeminiチャットを選択 ---
-    function selectGeminiChat() {
-      const geminiKey = `gemini_${currentUser}`; // 例: gemini_admin, gemini_taro
-      selectChat(geminiKey);
-    }
-
-    // --- タブ切り替え ---
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-
-      if (tabName === 'chats') {
-        document.getElementById('tabChats').style.display = 'block';
-        event.target.classList.add('active');
-      } else if (tabName === 'friends') {
-        document.getElementById('tabFriends').style.display = 'block';
-        event.target.classList.add('active');
-      } else if (tabName === 'admin') {
-        document.getElementById('tabAdmin').style.display = 'block';
-        event.target.classList.add('active');
-        renderAdminUserList();
-      }
-    }
-
-    // --- フレンド機能 ---
-    function sendFriendRequest() {
-      const targetId = document.getElementById('targetFriendId').value.trim();
-      if (!targetId || !users[targetId]) return alert('ユーザーが見つかりません');
-      if (targetId === currentUser) return alert('自分には送信できません');
-      if (users[currentUser].friends.includes(targetId)) return alert('既にフレンドです');
-
-      if (!users[targetId].requests.includes(currentUser)) {
-        users[targetId].requests.push(currentUser);
-        alert('フレンド申請を送信しました！');
-        document.getElementById('targetFriendId').value = '';
-      } else {
-        alert('既に申請済みです');
-      }
-    }
-
-    function acceptRequest(reqId) {
-      users[currentUser].friends.push(reqId);
-      users[reqId].friends.push(currentUser);
-      users[currentUser].requests = users[currentUser].requests.filter(id => id !== reqId);
-
-      const chatKey = [currentUser, reqId].sort().join('_');
-      if (!messages[chatKey]) messages[chatKey] = [];
-
-      renderFriendsTab();
-      renderChatsTab();
-    }
-
-    function renderFriendsTab() {
-      const u = users[currentUser];
+    // ログイン処理
+    function login() {
+      const username = document.getElementById("usernameInput").value.trim();
+      if (!username) return alert("ユーザー名を入力してください");
       
-      const reqDiv = document.getElementById('friendRequestsList');
-      reqDiv.innerHTML = '<strong>届いている申請:</strong><br>';
-      if (u.requests.length === 0) reqDiv.innerHTML += '<span style="font-size:12px; color:#888;">なし</span>';
-      u.requests.forEach(reqId => {
-        reqDiv.innerHTML += `
-          <div style="margin-top:5px; font-size:13px;">
-            ${reqId} 
-            <button class="btn-sm btn-success" onclick="acceptRequest('${reqId}')">承認</button>
-          </div>
-        `;
-      });
+      currentUser = username;
+      document.getElementById("userInfo").innerText = `ログイン中: ${currentUser}`;
+      document.getElementById("authScreen").classList.add("hidden");
+      document.getElementById("chatScreen").classList.remove("hidden");
 
-      const friendsDiv = document.getElementById('friendsList');
-      friendsDiv.innerHTML = '<strong>フレンド一覧:</strong><br>';
-      if (u.friends.length === 0) friendsDiv.innerHTML += '<span style="font-size:12px; color:#888;">なし</span>';
-      u.friends.forEach(fId => {
-        friendsDiv.innerHTML += `
-          <div style="margin-top:5px; font-size:13px; display:flex; justify-content:space-between;">
-            <span>👤 ${users[fId].name} (${fId})</span>
-            <button class="btn-sm btn-success" onclick="selectChatWithUser('${fId}')">トーク</button>
-          </div>
-        `;
+      // リアルタイムでメッセージ変更を監視（PC・スマホ両方に即時反映）
+      db.ref("messages").on("child_added", (snapshot) => {
+        const data = snapshot.val();
+        displayMessage(data.sender, data.text, data.isAi);
       });
     }
 
-    // --- トーク機能 ---
-    function renderChatsTab() {
-      const list = document.getElementById('chatList');
-      list.innerHTML = '';
-
-      users[currentUser].friends.forEach(fId => {
-        const chatKey = [currentUser, fId].sort().join('_');
-        list.innerHTML += `
-          <div class="chat-item" onclick="selectChat('${chatKey}')">
-            <strong>👤 ${users[fId].name}</strong>
-            <div style="font-size:11px; color:#888;">ID: ${fId}</div>
-          </div>
-        `;
-      });
-    }
-
-    function selectChatWithUser(fId) {
-      const chatKey = [currentUser, fId].sort().join('_');
-      switchTab('chats');
-      selectChat(chatKey);
-    }
-
-    function selectChat(chatKey) {
-      activeChatTarget = chatKey;
-      if (!messages[chatKey]) messages[chatKey] = [];
-
-      if (chatKey.startsWith('gemini_')) {
-        document.getElementById('activeChatHeader').innerText = `🤖 Gemini AI (${users[currentUser].name}専用)`;
-      } else {
-        const otherId = chatKey.split('_').find(id => id !== currentUser);
-        document.getElementById('activeChatHeader').innerText = `💬 ${users[otherId].name} (${otherId})`;
-      }
-
-      renderMessages();
-    }
-
-    function renderMessages() {
-      const area = document.getElementById('messagesArea');
-      area.innerHTML = '';
-
-      messages[activeChatTarget].forEach(m => {
-        let cls = 'msg ';
-        if (m.sender === currentUser) cls += 'me';
-        else if (m.sender === 'gemini') cls += 'gemini';
-        else cls += 'other';
-
-        area.innerHTML += `<div class="${cls}"><strong>${m.senderName}:</strong><br>${m.text}</div>`;
-      });
-
-      area.scrollTop = area.scrollHeight;
-    }
-
-    // --- メッセージ送信 & Gemini API連携 ---
-    async function sendMsg() {
-      const input = document.getElementById('msgInput');
+    // メッセージ送信
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
       const text = input.value.trim();
       if (!text) return;
 
-      if (users[currentUser].isBanned) return alert('アカウントがBANされているため送信できません。');
+      input.value = "";
 
-      messages[activeChatTarget].push({ sender: currentUser, senderName: users[currentUser].name, text });
-      input.value = '';
-      renderMessages();
-
-      // Gemini AIへ質問（ユーザー個別のキーかチェック）
-      if (activeChatTarget.startsWith('gemini_')) {
-        if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
-          setTimeout(() => {
-            messages[activeChatTarget].push({ sender: 'gemini', senderName: 'Gemini', text: '⚠️ APIキーが未設定です。196行目の GEMINI_API_KEY に取得したキーを設定してください。' });
-            renderMessages();
-          }, 400);
-          return;
-        }
-
-        try {
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text }] }] })
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            const errDetail = data.error ? data.error.message : 'API通信エラー';
-            messages[activeChatTarget].push({ sender: 'gemini', senderName: 'Gemini', text: `⚠️ エラー: ${errDetail}` });
-          } else {
-            const reply = data.candidates[0].content.parts[0].text;
-            messages[activeChatTarget].push({ sender: 'gemini', senderName: 'Gemini', text: reply });
-          }
-        } catch(e) {
-          messages[activeChatTarget].push({ sender: 'gemini', senderName: 'Gemini', text: `⚠️ 接続失敗: ${e.message}` });
-        }
-        renderMessages();
-      }
-    }
-
-    // --- 管理者機能 ---
-    function renderAdminUserList() {
-      const list = document.getElementById('adminUserList');
-      const filter = document.getElementById('adminSearchInput').value.toLowerCase();
-      list.innerHTML = '';
-
-      Object.keys(users).forEach(id => {
-        if (id === 'admin') return;
-        const u = users[id];
-        if (filter && !id.toLowerCase().includes(filter) && !u.name.toLowerCase().includes(filter)) return;
-
-        list.innerHTML += `
-          <div style="padding:8px; border-bottom:1px solid #ddd; font-size:12px;">
-            <strong>${u.name}</strong> (${id})<br>
-            状態: ${u.isBanned ? '🚫 BAN' : '🟢 正常'}<br>
-            <div style="margin-top:4px;">
-              <button class="btn-sm btn-warning" onclick="adminWarn('${id}')">⚠️ 警告</button>
-              <button class="btn-sm btn-danger" onclick="adminBan('${id}')">${u.isBanned ? '解除' : '🚫 BAN'}</button>
-            </div>
-          </div>
-        `;
+      // Firebase にメッセージを追加保存
+      db.ref("messages").push({
+        sender: currentUser,
+        text: text,
+        timestamp: Date.now(),
+        isAi: false
       });
-    }
 
-    function adminWarn(id) {
-      const msg = prompt(`${id} への警告メッセージを入力:`);
-      if (msg) {
-        users[id].warning = msg;
-        alert('警告をセットしました');
+      // @ai または AI宛のメッセージの場合、Gemini APIを呼び出す
+      if (text.includes("@ai") || text.toLowerCase().includes("gemini")) {
+        callGeminiApi(text);
       }
     }
 
-    function adminBan(id) {
-      users[id].isBanned = !users[id].isBanned;
-      renderAdminUserList();
+    // メッセージ画面表示
+    function displayMessage(sender, text, isAi) {
+      const chatBox = document.getElementById("chatBox");
+      const msgDiv = document.createElement("div");
+      
+      msgDiv.classList.add("msg");
+      if (isAi) {
+        msgDiv.classList.add("ai");
+      } else if (sender === currentUser) {
+        msgDiv.classList.add("me");
+      } else {
+        msgDiv.classList.add("other");
+      }
+
+      msgDiv.innerHTML = `<div class="sender-name">${sender}</div>${text}`;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Gemini API 呼び出し
+    async function callGeminiApi(userPrompt) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+      
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userPrompt }] }]
+          })
+        });
+
+        const data = await response.json();
+        const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Geminiからの応答を取得できませんでした。";
+
+        // AIの返信も Firebase に保存してリアルタイム全共有
+        db.ref("messages").push({
+          sender: "Gemini AI",
+          text: aiText,
+          timestamp: Date.now(),
+          isAi: true
+        });
+
+      } catch (err) {
+        console.error("Gemini API Error:", err);
+      }
     }
   </script>
 </body>
