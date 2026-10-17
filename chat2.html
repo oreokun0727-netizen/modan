@@ -22,13 +22,13 @@
     .app-container { display: none; width: 95vw; max-width: 1100px; height: 90vh; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; flex-direction: row; }
     
     /* サイドバー */
-    .sidebar { width: 300px; background: #f8f9fa; border-right: 1px solid #e9ecef; display: flex; flex-direction: column; }
+    .sidebar { width: 320px; background: #f8f9fa; border-right: 1px solid #e9ecef; display: flex; flex-direction: column; }
     .user-profile { padding: 15px; background: #e9ecef; display: flex; justify-content: space-between; align-items: center; }
     .user-profile .name { font-weight: bold; font-size: 14px; }
     .logout-btn { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 12px; }
 
     .nav-tabs { display: flex; background: #dee2e6; }
-    .tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 13px; color: #495057; }
+    .tab-btn { flex: 1; padding: 10px 4px; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 12px; color: #495057; }
     .tab-btn.active { background: white; color: #007bff; border-bottom: 2px solid #007bff; }
 
     .tab-content { flex: 1; overflow-y: auto; padding: 10px; }
@@ -62,7 +62,7 @@
 </head>
 <body>
 
-  <!-- 1. 認証画面（ログイン / 新規登録） -->
+  <!-- 1. 認証画面 -->
   <div id="authBox" class="auth-container">
     <h2 id="authTitle">ログイン</h2>
     <div class="input-group">
@@ -92,6 +92,7 @@
 
       <div class="nav-tabs">
         <button class="tab-btn active" onclick="switchTab('chats')">トーク</button>
+        <button class="tab-btn" onclick="switchTab('groups')">グループ</button>
         <button class="tab-btn" onclick="switchTab('friends')">フレンド</button>
         <button class="tab-btn" id="adminTabBtn" style="display:none;" onclick="switchTab('admin')">管理者</button>
       </div>
@@ -105,7 +106,17 @@
         <div id="chatList"></div>
       </div>
 
-      <!-- タブ2: フレンド申請・一覧 -->
+      <!-- タブ2: グループ作成・一覧 -->
+      <div id="tabGroups" class="tab-content" style="display:none;">
+        <div style="margin-bottom: 15px;">
+          <input type="text" id="newGroupName" placeholder="グループ名を入力" style="width:68%; padding:6px; font-size:12px;">
+          <button class="btn-sm btn-success" onclick="createGroup()">作成</button>
+        </div>
+        <strong>グループ一覧:</strong>
+        <div id="groupsList" style="margin-top: 5px;"></div>
+      </div>
+
+      <!-- タブ3: フレンド申請・一覧 -->
       <div id="tabFriends" class="tab-content" style="display:none;">
         <div style="margin-bottom: 15px;">
           <input type="text" id="targetFriendId" placeholder="相手のユーザーID" style="width:70%; padding:6px; font-size:12px;">
@@ -116,7 +127,7 @@
         <div id="friendsList"></div>
       </div>
 
-      <!-- タブ3: 管理者機能 -->
+      <!-- タブ4: 管理者機能 -->
       <div id="tabAdmin" class="tab-content" style="display:none;">
         <input type="text" id="adminSearchInput" placeholder="IDで検索..." onkeyup="renderAdminUserList()" style="width:100%; padding:6px; font-size:12px; margin-bottom:10px;">
         <div id="adminUserList"></div>
@@ -147,7 +158,7 @@
       measurementId: "G-B5RH1888K9"
     };
 
-    const GEMINI_API_KEY = "AQ.Ab8RN6KnmBPFQ4MyLHHoaWzKnBjGnUvCg9uUlxvLg5ulA1t2Dg";
+    const GEMINI_API_KEY = "AIzaSyBS-SR6GzSSavdj1BXaJix5nnaEG2H0JQ4";
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -156,15 +167,14 @@
     let activeChatTarget = null;
     let isRegisterMode = false;
     let usersCache = {};
+    let groupsCache = {};
 
-    // 初期管理者アカウントの自動生成（存在しない場合）
     db.ref('users/admin').once('value', (snap) => {
       if (!snap.exists()) {
         db.ref('users/admin').set({ pass: 'ayane1211', name: '管理者', role: 'admin', isBanned: false, warning: '' });
       }
     });
 
-    // ユーザー情報のリアルタイム同期
     db.ref('users').on('value', (snap) => {
       usersCache = snap.val() || {};
       if (currentUser) {
@@ -174,7 +184,12 @@
       }
     });
 
-    // 認証モード切り替え
+    // グループ情報のリアルタイム同期
+    db.ref('groups').on('value', (snap) => {
+      groupsCache = snap.val() || {};
+      if (currentUser) renderGroupsTab();
+    });
+
     function toggleAuthMode() {
       isRegisterMode = !isRegisterMode;
       const title = document.getElementById('authTitle');
@@ -192,7 +207,6 @@
       }
     }
 
-    // ログイン / 新規登録処理
     function submitAuth() {
       const id = document.getElementById('authUserId').value.trim();
       const pass = document.getElementById('authPassword').value.trim();
@@ -232,7 +246,6 @@
       document.getElementById('authPassword').value = '';
     }
 
-    // アプリ初期化
     function initApp() {
       const user = usersCache[currentUser];
       document.getElementById('myUserName').innerText = user.name || currentUser;
@@ -246,6 +259,7 @@
 
       renderFriendsTab();
       renderChatsTab();
+      renderGroupsTab();
       selectGeminiChat();
     }
 
@@ -260,6 +274,9 @@
       if (tabName === 'chats') {
         document.getElementById('tabChats').style.display = 'block';
         event.target.classList.add('active');
+      } else if (tabName === 'groups') {
+        document.getElementById('tabGroups').style.display = 'block';
+        event.target.classList.add('active');
       } else if (tabName === 'friends') {
         document.getElementById('tabFriends').style.display = 'block';
         event.target.classList.add('active');
@@ -270,7 +287,44 @@
       }
     }
 
-    // フレンド機能
+    // --- グループ機能 ---
+    function createGroup() {
+      const name = document.getElementById('newGroupName').value.trim();
+      if (!name) return alert('グループ名を入力してください');
+
+      const groupId = 'group_' + Date.now();
+      db.ref(`groups/${groupId}`).set({
+        name: name,
+        createdBy: currentUser
+      });
+
+      document.getElementById('newGroupName').value = '';
+      alert(`グループ「${name}」を作成しました！`);
+      selectChat(groupId);
+    }
+
+    function renderGroupsTab() {
+      const list = document.getElementById('groupsList');
+      list.innerHTML = '';
+
+      const groupKeys = Object.keys(groupsCache);
+      if (groupKeys.length === 0) {
+        list.innerHTML = '<span style="font-size:12px; color:#888;">グループがありません</span>';
+        return;
+      }
+
+      groupKeys.forEach(gId => {
+        const g = groupsCache[gId];
+        list.innerHTML += `
+          <div class="chat-item" onclick="selectChat('${gId}')">
+            <strong>👥 ${g.name}</strong>
+            <div style="font-size:11px; color:#888;">作成者: ${g.createdBy}</div>
+          </div>
+        `;
+      });
+    }
+
+    // --- フレンド機能 ---
     function sendFriendRequest() {
       const targetId = document.getElementById('targetFriendId').value.trim();
       if (!targetId || !usersCache[targetId]) return alert('ユーザーが見つかりません');
@@ -353,13 +407,15 @@
 
       if (chatKey.startsWith('gemini_')) {
         document.getElementById('activeChatHeader').innerText = `🤖 Gemini AI (${usersCache[currentUser]?.name || currentUser}専用)`;
+      } else if (chatKey.startsWith('group_')) {
+        const gName = groupsCache[chatKey] ? groupsCache[chatKey].name : 'グループ';
+        document.getElementById('activeChatHeader').innerText = `👥 ${gName}`;
       } else {
         const otherId = chatKey.split('_').find(id => id !== currentUser);
         const otherName = usersCache[otherId] ? usersCache[otherId].name : otherId;
         document.getElementById('activeChatHeader').innerText = `💬 ${otherName} (${otherId})`;
       }
 
-      // Firebaseメッセージのリアルタイム受信
       db.ref(`messages/${activeChatTarget}`).on('value', (snapshot) => {
         const msgs = snapshot.val() || {};
         renderMessages(msgs);
@@ -382,7 +438,6 @@
       area.scrollTop = area.scrollHeight;
     }
 
-    // メッセージ送信 & Gemini AI連携
     async function sendMsg() {
       const input = document.getElementById('msgInput');
       const text = input.value.trim();
@@ -392,7 +447,6 @@
 
       const myName = usersCache[currentUser]?.name || currentUser;
 
-      // Firebaseへメッセージ追加
       db.ref(`messages/${activeChatTarget}`).push({
         sender: currentUser,
         senderName: myName,
@@ -425,7 +479,6 @@
       }
     }
 
-    // 管理者機能
     function renderAdminUserList() {
       const list = document.getElementById('adminUserList');
       const filter = document.getElementById('adminSearchInput').value.toLowerCase();
