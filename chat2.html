@@ -36,18 +36,28 @@
     .chat-item:hover, .chat-item.active { background: #e7f1ff; border-color: #b6d4fe; }
 
     /* チャットメインエリア */
-    .main-chat { flex: 1; display: flex; flex-direction: column; background: #fff; }
+    .main-chat { flex: 1; display: flex; flex-direction: column; background: #fff; position: relative; }
     .chat-header { padding: 15px; border-bottom: 1px solid #e9ecef; font-weight: bold; font-size: 16px; background: #fafafa; }
     .messages-area { flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa; display: flex; flex-direction: column; gap: 10px; }
     
-    .msg { max-width: 70%; padding: 10px 14px; border-radius: 15px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; }
+    .msg { max-width: 70%; padding: 10px 14px; border-radius: 15px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
     .msg.me { align-self: flex-end; background: #007bff; color: white; border-bottom-right-radius: 2px; }
     .msg.other { align-self: flex-start; background: #e9ecef; color: #333; border-bottom-left-radius: 2px; }
     .msg.gemini { align-self: flex-start; background: #e3f2fd; color: #0c5460; border: 1px solid #b8daff; }
+    .chat-img { max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 5px; display: block; }
+    .stamp-msg { font-size: 40px; line-height: 1; margin-top: 4px; }
 
-    .chat-input-area { padding: 12px; border-top: 1px solid #e9ecef; display: flex; gap: 8px; background: white; }
-    .chat-input-area input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
-    .chat-input-area button { padding: 8px 18px; background: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+    /* 入力エリア */
+    .chat-input-area { padding: 12px; border-top: 1px solid #e9ecef; display: flex; gap: 6px; background: white; align-items: center; }
+    .chat-input-area input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
+    .chat-input-area button { padding: 8px 14px; background: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+
+    .icon-btn { background: #e9ecef !important; color: #333 !important; padding: 8px 10px !important; border-radius: 50% !important; font-size: 16px; }
+    
+    /* スタンプパレット */
+    .stamp-picker { display: none; position: absolute; bottom: 60px; right: 80px; background: white; border: 1px solid #ccc; border-radius: 12px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .stamp-picker span { font-size: 28px; cursor: pointer; text-align: center; }
+    .stamp-picker span:hover { transform: scale(1.2); }
 
     /* ボタン各種 */
     .btn-sm { padding: 4px 8px; font-size: 12px; border-radius: 4px; border: none; cursor: pointer; }
@@ -106,13 +116,15 @@
         <div id="chatList"></div>
       </div>
 
-      <!-- タブ2: グループ作成・一覧 -->
+      <!-- タブ2: メンバー指定グループ作成・一覧 -->
       <div id="tabGroups" class="tab-content" style="display:none;">
-        <div style="margin-bottom: 15px;">
-          <input type="text" id="newGroupName" placeholder="グループ名を入力" style="width:68%; padding:6px; font-size:12px;">
-          <button class="btn-sm btn-success" onclick="createGroup()">作成</button>
+        <div style="margin-bottom: 12px; background:#e9ecef; padding:8px; border-radius:6px;">
+          <div style="font-size:12px; font-weight:bold; margin-bottom:4px;">新規グループ作成</div>
+          <input type="text" id="newGroupName" placeholder="グループ名" style="width:100%; padding:5px; font-size:12px; margin-bottom:4px;">
+          <input type="text" id="newGroupMembers" placeholder="参加許可ID (例: taro, hanako)" style="width:100%; padding:5px; font-size:12px; margin-bottom:6px;">
+          <button class="btn-sm btn-success" style="width:100%;" onclick="createGroup()">メンバー限定グループ作成</button>
         </div>
-        <strong>グループ一覧:</strong>
+        <strong>参加中のグループ:</strong>
         <div id="groupsList" style="margin-top: 5px;"></div>
       </div>
 
@@ -138,7 +150,26 @@
     <div class="main-chat">
       <div class="chat-header" id="activeChatHeader">🤖 Gemini AI</div>
       <div class="messages-area" id="messagesArea"></div>
+      
+      <!-- スタンプパレット -->
+      <div class="stamp-picker" id="stampPicker">
+        <span onclick="sendStamp('👍')">👍</span>
+        <span onclick="sendStamp('❤️')">❤️</span>
+        <span onclick="sendStamp('😊')">😊</span>
+        <span onclick="sendStamp('🎉')">🎉</span>
+        <span onclick="sendStamp('🔥')">🔥</span>
+        <span onclick="sendStamp('😭')">😭</span>
+        <span onclick="sendStamp('🙏')">🙏</span>
+        <span onclick="sendStamp('✨')">✨</span>
+      </div>
+
       <div class="chat-input-area">
+        <!-- 画像送信ボタン -->
+        <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="sendImage(this)">
+        <button class="icon-btn" onclick="document.getElementById('imageInput').click()" title="写真を送信">📷</button>
+        <!-- スタンプボタン -->
+        <button class="icon-btn" onclick="toggleStampPicker()" title="スタンプ">😃</button>
+        
         <input type="text" id="msgInput" placeholder="メッセージを入力..." onkeypress="if(event.key==='Enter') sendMsg()">
         <button onclick="sendMsg()">送信</button>
       </div>
@@ -148,7 +179,7 @@
   <script>
     // --- 🔑 Firebase 設定 ---
     const firebaseConfig = {
-      apiKey: "AIzaSyBS-SR6GzSSavdj1BXaJix5nnaEG2H0JQ4",
+      apiKey: "AQ.Ab8RN6KnmBPFQ4MyLHHoaWzKnBjGnUvCg9uUlxvLg5ulA1t2Dg",
       authDomain: "modanchat-db.firebaseapp.com",
       databaseURL: "https://modanchat-db-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "modanchat-db",
@@ -158,7 +189,7 @@
       measurementId: "G-B5RH1888K9"
     };
 
-    const GEMINI_API_KEY = "AIzaSyBS-SR6GzSSavdj1BXaJix5nnaEG2H0JQ4";
+    const GEMINI_API_KEY = "AQ.Ab8RN6KnmBPFQ4MyLHHoaWzKnBjGnUvCg9uUlxvLg5ulA1t2Dg";
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -184,7 +215,6 @@
       }
     });
 
-    // グループ情報のリアルタイム同期
     db.ref('groups').on('value', (snap) => {
       groupsCache = snap.val() || {};
       if (currentUser) renderGroupsTab();
@@ -287,19 +317,34 @@
       }
     }
 
-    // --- グループ機能 ---
+    // --- 限定メンバーグループ作成 ---
     function createGroup() {
       const name = document.getElementById('newGroupName').value.trim();
+      const rawMembers = document.getElementById('newGroupMembers').value.trim();
       if (!name) return alert('グループ名を入力してください');
 
+      // 自分以外の指定メンバーリストを作成
+      const allowedMembers = [currentUser];
+      if (rawMembers) {
+        rawMembers.split(',').forEach(id => {
+          const trimmed = id.trim();
+          if (trimmed && !allowedMembers.includes(trimmed)) allowedMembers.push(trimmed);
+        });
+      }
+
       const groupId = 'group_' + Date.now();
+      const membersObj = {};
+      allowedMembers.forEach(id => membersObj[id] = true);
+
       db.ref(`groups/${groupId}`).set({
         name: name,
-        createdBy: currentUser
+        createdBy: currentUser,
+        members: membersObj
       });
 
       document.getElementById('newGroupName').value = '';
-      alert(`グループ「${name}」を作成しました！`);
+      document.getElementById('newGroupMembers').value = '';
+      alert(`指定メンバーグループ「${name}」を作成しました！`);
       selectChat(groupId);
     }
 
@@ -307,21 +352,24 @@
       const list = document.getElementById('groupsList');
       list.innerHTML = '';
 
-      const groupKeys = Object.keys(groupsCache);
-      if (groupKeys.length === 0) {
-        list.innerHTML = '<span style="font-size:12px; color:#888;">グループがありません</span>';
-        return;
-      }
-
-      groupKeys.forEach(gId => {
+      let count = 0;
+      Object.keys(groupsCache).forEach(gId => {
         const g = groupsCache[gId];
-        list.innerHTML += `
-          <div class="chat-item" onclick="selectChat('${gId}')">
-            <strong>👥 ${g.name}</strong>
-            <div style="font-size:11px; color:#888;">作成者: ${g.createdBy}</div>
-          </div>
-        `;
+        // 作成者本人、または許可メンバーに含まれている場合のみ表示
+        if (g.createdBy === currentUser || (g.members && g.members[currentUser])) {
+          count++;
+          list.innerHTML += `
+            <div class="chat-item" onclick="selectChat('${gId}')">
+              <strong>🔒 ${g.name}</strong>
+              <div style="font-size:11px; color:#888;">作成者: ${g.createdBy}</div>
+            </div>
+          `;
+        }
       });
+
+      if (count === 0) {
+        list.innerHTML = '<span style="font-size:12px; color:#888;">参加中のグループはありません</span>';
+      }
     }
 
     // --- フレンド機能 ---
@@ -404,12 +452,13 @@
       if (activeChatTarget) db.ref(`messages/${activeChatTarget}`).off();
 
       activeChatTarget = chatKey;
+      document.getElementById('stampPicker').style.display = 'none';
 
       if (chatKey.startsWith('gemini_')) {
         document.getElementById('activeChatHeader').innerText = `🤖 Gemini AI (${usersCache[currentUser]?.name || currentUser}専用)`;
       } else if (chatKey.startsWith('group_')) {
         const gName = groupsCache[chatKey] ? groupsCache[chatKey].name : 'グループ';
-        document.getElementById('activeChatHeader').innerText = `👥 ${gName}`;
+        document.getElementById('activeChatHeader').innerText = `🔒 ${gName}`;
       } else {
         const otherId = chatKey.split('_').find(id => id !== currentUser);
         const otherName = usersCache[otherId] ? usersCache[otherId].name : otherId;
@@ -432,12 +481,23 @@
         else if (m.sender === 'gemini') cls += 'gemini';
         else cls += 'other';
 
-        area.innerHTML += `<div class="${cls}"><strong>${m.senderName}:</strong><br>${m.text}</div>`;
+        let content = `<strong>${m.senderName}:</strong><br>`;
+
+        if (m.type === 'image') {
+          content += `<img src="${m.imageUrl}" class="chat-img">`;
+        } else if (m.type === 'stamp') {
+          content += `<div class="stamp-msg">${m.text}</div>`;
+        } else {
+          content += m.text;
+        }
+
+        area.innerHTML += `<div class="${cls}">${content}</div>`;
       });
 
       area.scrollTop = area.scrollHeight;
     }
 
+    // メッセージ送信
     async function sendMsg() {
       const input = document.getElementById('msgInput');
       const text = input.value.trim();
@@ -445,17 +505,10 @@
 
       if (usersCache[currentUser]?.isBanned) return alert('アカウントがBANされているため送信できません。');
 
-      const myName = usersCache[currentUser]?.name || currentUser;
-
-      db.ref(`messages/${activeChatTarget}`).push({
-        sender: currentUser,
-        senderName: myName,
-        text: text,
-        timestamp: Date.now()
-      });
-
+      pushMessage({ type: 'text', text: text });
       input.value = '';
 
+      // Gemini AIからの応答
       if (activeChatTarget.startsWith('gemini_')) {
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -468,15 +521,57 @@
 
           if (!res.ok) {
             const errDetail = data.error ? data.error.message : 'API通信エラー';
-            db.ref(`messages/${activeChatTarget}`).push({ sender: 'gemini', senderName: 'Gemini', text: `⚠️ エラー: ${errDetail}` });
+            pushMessage({ type: 'text', text: `⚠️ エラー: ${errDetail}`, sender: 'gemini', senderName: 'Gemini' });
           } else {
             const reply = data.candidates[0].content.parts[0].text;
-            db.ref(`messages/${activeChatTarget}`).push({ sender: 'gemini', senderName: 'Gemini', text: reply });
+            pushMessage({ type: 'text', text: reply, sender: 'gemini', senderName: 'Gemini' });
           }
         } catch(e) {
-          db.ref(`messages/${activeChatTarget}`).push({ sender: 'gemini', senderName: 'Gemini', text: `⚠️ 接続失敗: ${e.message}` });
+          pushMessage({ type: 'text', text: `⚠️ 接続失敗: ${e.message}`, sender: 'gemini', senderName: 'Gemini' });
         }
       }
+    }
+
+    // スタンプ・画像共通送信処理
+    function pushMessage(msgData) {
+      const myName = usersCache[currentUser]?.name || currentUser;
+      db.ref(`messages/${activeChatTarget}`).push({
+        sender: msgData.sender || currentUser,
+        senderName: msgData.senderName || myName,
+        type: msgData.type || 'text',
+        text: msgData.text || '',
+        imageUrl: msgData.imageUrl || '',
+        timestamp: Date.now()
+      });
+    }
+
+    // スタンプ送信
+    function toggleStampPicker() {
+      const picker = document.getElementById('stampPicker');
+      picker.style.display = picker.style.display === 'grid' ? 'none' : 'grid';
+    }
+
+    function sendStamp(emoji) {
+      if (usersCache[currentUser]?.isBanned) return alert('アカウントがBANされています。');
+      pushMessage({ type: 'stamp', text: emoji });
+      document.getElementById('stampPicker').style.display = 'none';
+    }
+
+    // 写真（画像）送信
+    function sendImage(fileInput) {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        return alert('画像サイズが大きすぎます（2MB以下の画像を送信してください）。');
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        pushMessage({ type: 'image', imageUrl: e.target.result });
+        fileInput.value = '';
+      };
+      reader.readAsDataURL(file);
     }
 
     function renderAdminUserList() {
